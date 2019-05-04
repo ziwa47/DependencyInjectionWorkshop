@@ -54,9 +54,7 @@ namespace DependencyInjectionWorkshopTests
         public void Log_account_failed_count_when_invalid()
         {
             GivenFailedCount(DefaultFailedCount);
-
             WhenInvalid();
-
             LogShouldContains(DefaultAccountId, DefaultFailedCount);
         }
 
@@ -65,6 +63,18 @@ namespace DependencyInjectionWorkshopTests
         {
             WhenInvalid();
             ShouldNotifyUser();
+        }
+
+        [Test]
+        public void Reset_FailCount_When_Valid()
+        {
+            WhenValid();
+            ShouldResetFailedCounter();
+        }
+
+        private void ShouldResetFailedCounter()
+        {
+            _failedCounter.Received(1).Reset(Arg.Any<string>());
         }
 
         private void GivenFailedCount(int defaultFailedCount)

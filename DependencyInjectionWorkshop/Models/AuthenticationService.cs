@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Dapper;
+
+using SlackAPI;
+
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Threading;
-using Dapper;
-using SlackAPI;
 
 namespace DependencyInjectionWorkshop.Models
 {
@@ -14,32 +15,30 @@ namespace DependencyInjectionWorkshop.Models
     {
         public bool Verify(string accountId, string password, string otp)
         {
-            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") };
-            CheckAccountIsLocked(accountId, httpClient);
+            CheckAccountIsLocked(accountId);
 
             var passwordFromDb = GetPasswordFromDb(accountId);
 
-            var hashPassword = GetHashPassoword(password);
+            var hashPassword = GetHashPassword(password);
 
-            var currentOtp = GetCurrentOtp(accountId, httpClient);
+            var currentOtp = GetCurrentOtp(accountId);
 
             if (string.Equals(currentOtp, otp) && string.Equals(passwordFromDb, hashPassword))
             {
-                ResetFaildCounter(accountId, httpClient);
+                ResetFailedCounter(accountId);
 
                 return true;
             }
             else
             {
-                AddFailedCount(accountId, httpClient);
+                AddFailedCount(accountId);
 
-                var failedCount = GetFailedCount(accountId, httpClient);
+                var failedCount = GetFailedCount(accountId);
                 LogFailedCount($"accountId : {accountId}, failedTimes : {failedCount}");
                 Notify($"accountId :{accountId} verify failed");
 
                 return false;
             }
-
         }
 
         private static void Notify(string errMsg)
@@ -53,30 +52,31 @@ namespace DependencyInjectionWorkshop.Models
             NLog.LogManager.GetCurrentClassLogger().Info(message);
         }
 
-        private static int GetFailedCount(string accountId, HttpClient httpClient)
+        private static int GetFailedCount(string accountId)
         {
-            var getFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+            var getFailedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
             getFailedCountResponse.EnsureSuccessStatusCode();
             var count = getFailedCountResponse.Content.ReadAsAsync<int>().Result;
             return count;
         }
 
-        private static void AddFailedCount(string accountId, HttpClient httpClient)
+        private static void AddFailedCount(string accountId)
         {
-            var addResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+            var addResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
             addResponse.EnsureSuccessStatusCode();
         }
 
-        private static void ResetFaildCounter(string accountId, HttpClient httpClient)
+        private static void ResetFailedCounter(string accountId)
         {
-            var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+            var resetResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
             resetResponse.EnsureSuccessStatusCode();
         }
 
-        private static string GetCurrentOtp(string accountId, HttpClient httpClient)
+        private static string GetCurrentOtp(string accountId)
         {
+            HttpClient httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") };
             string otpResponse;
-            httpClient = new HttpClient() {BaseAddress = new Uri("http://joey.dev/")};
+            httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") };
             var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
             if (response.IsSuccessStatusCode)
             {
@@ -90,7 +90,7 @@ namespace DependencyInjectionWorkshop.Models
             return otpResponse;
         }
 
-        private static string GetHashPassoword(string password)
+        private static string GetHashPassword(string password)
         {
             var crypt = new System.Security.Cryptography.SHA256Managed();
             var hash = new StringBuilder();
@@ -109,16 +109,16 @@ namespace DependencyInjectionWorkshop.Models
             string dbHashPassword;
             using (var connection = new SqlConnection("my connection string"))
             {
-                dbHashPassword = connection.Query<string>("spGetUserPassword", new {Id = accountId},
+                dbHashPassword = connection.Query<string>("spGetUserPassword", new { Id = accountId },
                     commandType: CommandType.StoredProcedure).SingleOrDefault();
             }
 
             return dbHashPassword;
         }
 
-        private static void CheckAccountIsLocked(string accountId, HttpClient httpClient)
+        private static void CheckAccountIsLocked(string accountId)
         {
-            var isLockResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+            var isLockResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
             isLockResponse.EnsureSuccessStatusCode();
 
             if (isLockResponse.Content.ReadAsAsync<bool>().Result)

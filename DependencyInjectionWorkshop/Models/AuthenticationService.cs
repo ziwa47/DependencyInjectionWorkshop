@@ -18,8 +18,7 @@ namespace DependencyInjectionWorkshop.Models
             var isLockResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
             isLockResponse.EnsureSuccessStatusCode();
 
-            var isLock = isLockResponse.Content.ReadAsAsync<bool>().Result;
-            if(isLock)
+            if(isLockResponse.Content.ReadAsAsync<bool>().Result)
                 throw new FailedTooManyTimesException();
 
 
@@ -68,6 +67,12 @@ namespace DependencyInjectionWorkshop.Models
                 var slackClient = new SlackClient("my api token");
                 slackClient.PostMessage(response1 => { }, "my channel", errMsg, "my bot name");
 
+
+                var getFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+                getFailedCountResponse.EnsureSuccessStatusCode();
+                var count = getFailedCountResponse.Content.ReadAsAsync<int>().Result;
+                NLog.LogManager.GetCurrentClassLogger().Info($"accountId : {accountId}, failedTimes : {count}");
+                
                 return false;
             }
 

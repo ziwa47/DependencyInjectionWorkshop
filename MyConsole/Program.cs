@@ -11,5 +11,6 @@ namespace MyConsole
         static void Main(string[] args)
         {
         }
+
     }
 }

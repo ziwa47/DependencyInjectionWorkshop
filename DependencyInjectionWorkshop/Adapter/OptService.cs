@@ -3,12 +3,12 @@ using System.Net.Http;
 
 namespace DependencyInjectionWorkshop.Adapter
 {
-    public interface IOpt
+    public interface IOtp
     {
         string GetCurrentOtp(string accountId);
     }
 
-    public class OptService : IOpt
+    public class OtpService : IOtp
     {
         public string GetCurrentOtp(string accountId)
         {

@@ -4,12 +4,12 @@ namespace DependencyInjectionWorkshop.Adapter
 {
     public interface IHash
     {
-        string GeHash(string plainText);
+        string GetHash(string plainText);
     }
 
     public class Sha256Adapter : IHash
     {
-        public string GeHash(string plainText)
+        public string GetHash(string plainText)
         {
             var crypt = new System.Security.Cryptography.SHA256Managed();
             var hash = new StringBuilder();

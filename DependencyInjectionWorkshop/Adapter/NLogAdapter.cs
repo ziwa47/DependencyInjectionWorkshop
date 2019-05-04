@@ -1,10 +1,25 @@
-﻿namespace DependencyInjectionWorkshop.Adapter
+﻿using System;
+
+namespace DependencyInjectionWorkshop.Adapter
 {
-    public class NLogAdapter
+    public interface ILogger
     {
-        public void LogFailedCount(string message)
+        void Info(string message);
+    }
+
+    public class NLogAdapter : ILogger
+    {
+        public void Info(string message)
         {
             NLog.LogManager.GetCurrentClassLogger().Info(message);
+        }
+    }
+
+    public class ConsoleAdapter : ILogger
+    {
+        public void Info(string message)
+        {
+            Console.WriteLine(message);
         }
     }
 }

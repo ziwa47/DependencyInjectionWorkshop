@@ -4,21 +4,29 @@ using DependencyInjectionWorkshop.Exceptions;
 
 namespace DependencyInjectionWorkshop.Adapter
 {
-    public class FailedCounter
+    public interface IFailedCounter
     {
-        public void ResetFailedCounter(string accountId)
+        void Reset(string accountId);
+        void Add(string accountId);
+        int Get(string accountId);
+        void CheckAccountIsLocked(string accountId);
+    }
+
+    public class FailedCounter : IFailedCounter
+    {
+        public void Reset(string accountId)
         {
             var resetResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
             resetResponse.EnsureSuccessStatusCode();
         }
 
-        public void AddFailedCount(string accountId)
+        public void Add(string accountId)
         {
             var addResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
             addResponse.EnsureSuccessStatusCode();
         }
 
-        public int GetFailedCount(string accountId)
+        public int Get(string accountId)
         {
             var getFailedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
             getFailedCountResponse.EnsureSuccessStatusCode();

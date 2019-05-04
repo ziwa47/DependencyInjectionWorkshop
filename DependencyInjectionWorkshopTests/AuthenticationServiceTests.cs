@@ -3,7 +3,6 @@ using DependencyInjectionWorkshop.Exceptions;
 using DependencyInjectionWorkshop.Models;
 using DependencyInjectionWorkshop.Repository;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace DependencyInjectionWorkshopTests
@@ -16,14 +15,14 @@ namespace DependencyInjectionWorkshopTests
         private const string DefaultOtp = "12345";
         private const string DefaultPassword = "pw";
         private const int DefaultFailedCount = 91;
+        private IAuthentication _authentication;
+        private IFailedCounter _failedCounter;
+        private IHash _hash;
+        private ILogger _logger;
+        private INotification _notification;
+        private IOtp _otp;
 
         private IProfile _profile;
-        private IOtp _otp;
-        private IHash _hash;
-        private INotification _notification;
-        private ILogger _logger;
-        private IFailedCounter _failedCounter;
-        private AuthenticationService _authenticationService;
 
         [SetUp]
         public void SetUp()
@@ -34,8 +33,40 @@ namespace DependencyInjectionWorkshopTests
             _notification = Substitute.For<INotification>();
             _logger = Substitute.For<ILogger>();
             _failedCounter = Substitute.For<IFailedCounter>();
-            _authenticationService =
-                new AuthenticationService(_failedCounter, _profile, _hash, _otp, _logger, _notification);
+
+
+            var authenticationService =
+                new AuthenticationService(_profile, _hash, _otp);
+
+            var notificationDecorator = new NotificationDecorator(authenticationService,_notification);
+            var failedCounterDecorator = new FailedCounterDecorator(notificationDecorator,_failedCounter);
+            var logDecorator = new LogDecorator(failedCounterDecorator, _failedCounter, _logger);
+            _authentication = logDecorator;
+        }
+
+        [Test]
+        public void Account_Is_Locked()
+        {
+            //When void
+            //_failedCounter
+            //    .When(x=>x.CheckAccountIsLocked(DefaultAccountId))
+            //    .Do(x=>throw new FailedTooManyTimesException());
+
+            //When bool
+            _failedCounter.CheckAccountIsLocked(DefaultAccountId).ReturnsForAnyArgs(true);
+
+            TestDelegate action = () =>
+            {
+                _authentication.Verify(DefaultAccountId, DefaultHashedPassword, DefaultOtp);
+            };
+            Assert.Throws<FailedTooManyTimesException>(action);
+        }
+
+        [Test]
+        public void Add_Failed_Count_When_Invalid()
+        {
+            WhenInvalid();
+            ShouldAddFailedCount();
         }
 
         [Test]
@@ -72,30 +103,6 @@ namespace DependencyInjectionWorkshopTests
         {
             WhenValid();
             ShouldResetFailedCounter();
-        }
-
-        [Test]
-        public void Add_Failed_Count_When_Invalid()
-        {
-            WhenInvalid();
-            ShouldAddFailedCount();
-        }
-
-        [Test]
-        public void Account_Is_Locked()
-        {
-           //When Void
-           //_failedCounter
-           //    .When(x=>x.CheckAccountIsLocked(DefaultAccountId))
-           //    .Do(x=>throw new FailedTooManyTimesException());
-
-           //When Bool
-           _failedCounter.CheckAccountIsLocked(DefaultAccountId).ReturnsForAnyArgs(true);
-           
-           TestDelegate action = () =>
-           {
-               _authenticationService.Verify(DefaultAccountId, DefaultHashedPassword, DefaultOtp);};
-           Assert.Throws<FailedTooManyTimesException>(action);
         }
 
         private void ShouldAddFailedCount()
@@ -155,7 +162,7 @@ namespace DependencyInjectionWorkshopTests
 
         private bool WhenVerify(string accountId, string password, string otp)
         {
-            var isValid = _authenticationService.Verify(accountId, password, otp);
+            var isValid = _authentication.Verify(accountId, password, otp);
             return isValid;
         }
 

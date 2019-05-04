@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using Dapper;
 using SlackAPI;
 
@@ -13,6 +14,16 @@ namespace DependencyInjectionWorkshop.Models
     {
         public bool Verify(string accountId, string password, string otp)
         {
+            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") };
+            var isLockResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+            isLockResponse.EnsureSuccessStatusCode();
+
+            var isLock = isLockResponse.Content.ReadAsAsync<bool>().Result;
+            if(isLock)
+                throw new FailedTooManyTimesException();
+
+
+
             string dbHashPassword;
             using (var connection = new SqlConnection("my connection string"))
             {
@@ -30,7 +41,7 @@ namespace DependencyInjectionWorkshop.Models
             var inputPasswordHash = hash.ToString();
 
             string otpResponse;
-            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
+            httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.dev/") };
             var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
             if (response.IsSuccessStatusCode)
             {
@@ -43,15 +54,27 @@ namespace DependencyInjectionWorkshop.Models
 
             if (string.Equals(otpResponse, otp) && string.Equals(dbHashPassword, inputPasswordHash))
             {
+                var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+                resetResponse.EnsureSuccessStatusCode();
+
                 return true;
             }
             else
             {
+                var addResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+                addResponse.EnsureSuccessStatusCode();
+
+                var errMsg = $"accountId :{accountId} verify failed";
                 var slackClient = new SlackClient("my api token");
-                slackClient.PostMessage(response1 => { }, "my channel", "my message", "my bot name");
+                slackClient.PostMessage(response1 => { }, "my channel", errMsg, "my bot name");
+
                 return false;
             }
 
         }
+    }
+
+    public class FailedTooManyTimesException : Exception
+    {
     }
 }

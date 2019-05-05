@@ -20,19 +20,14 @@ namespace DependencyInjectionWorkshop.Models
         public bool Verify(string accountId, string password, string otp)
         {
             var passwordFromDb = _profile.GetPassword(accountId);
-            
+
             var hashPassword = _hash.GetHash(password);
 
             var currentOtp = _otp.GetCurrentOtp(accountId);
 
-            if (string.Equals(currentOtp, otp) && string.Equals(passwordFromDb, hashPassword))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            var isValid = string.Equals(currentOtp, otp) && string.Equals(passwordFromDb, hashPassword);
+
+            return isValid;
         }
     }
 }

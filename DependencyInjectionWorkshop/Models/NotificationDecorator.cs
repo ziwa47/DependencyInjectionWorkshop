@@ -2,14 +2,12 @@
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class NotificationDecorator :IAuthentication
+    public class NotificationDecorator :AuthenticationBaseDecorator
     {
-        private readonly IAuthentication _authenticationService;
         private readonly INotification _notification;
 
-        public NotificationDecorator(IAuthentication authenticationService, INotification notification)
+        public NotificationDecorator(IAuthentication authenticationService, INotification notification) : base(authenticationService)
         {
-            _authenticationService = authenticationService;
             _notification = notification;
         }
 
@@ -18,9 +16,9 @@ namespace DependencyInjectionWorkshop.Models
             _notification.PushMessage($"accountId :{accountId} verify failed");
         }
 
-        public bool Verify(string accountId, string password, string otp)
+        public override bool Verify(string accountId, string password, string otp)
         {
-            var isValid =  _authenticationService.Verify(accountId, password, otp);
+            var isValid =  base.Verify(accountId, password, otp);
             if (isValid == false)
             {
                 NotificationVerify(accountId);

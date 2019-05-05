@@ -3,14 +3,12 @@ using DependencyInjectionWorkshop.Exceptions;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class FailedCounterDecorator :IAuthentication
+    public class FailedCounterDecorator : AuthenticationBaseDecorator
     {
-        private readonly IAuthentication _authenticationService;
         private readonly IFailedCounter _failedCounter;
 
-        public FailedCounterDecorator(IAuthentication authenticationService, IFailedCounter failedCounter)
+        public FailedCounterDecorator(IAuthentication authentication, IFailedCounter failedCounter) : base(authentication)
         {
-            _authenticationService = authenticationService;
             _failedCounter = failedCounter;
         }
 
@@ -19,14 +17,15 @@ namespace DependencyInjectionWorkshop.Models
             return _failedCounter.CheckAccountIsLocked(accountId);
         }
 
-        public bool Verify(string accountId, string password, string otp)
+        public override bool Verify(string accountId, string password, string otp)
         {
             if (CheckAccountIsLocked(accountId))
             {
                 throw new FailedTooManyTimesException();
             }
 
-            var isValid= _authenticationService.Verify(accountId, password, otp);
+            var isValid = base.Verify(accountId, password, otp);
+
             if (isValid)
             {
                 _failedCounter.Reset(accountId);

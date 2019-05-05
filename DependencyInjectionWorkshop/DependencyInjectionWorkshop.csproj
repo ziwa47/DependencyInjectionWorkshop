@@ -82,7 +82,9 @@
     <Compile Include="Adapter\SlackAdapter.cs" />
     <Compile Include="Exceptions\FailedTooManyTimesException.cs" />
     <Compile Include="Models\AuthenticationService.cs" />
+    <Compile Include="Models\FailedCounterDecorator.cs" />
     <Compile Include="Models\IAuthentication.cs" />
+    <Compile Include="Models\LogDecorator.cs" />
     <Compile Include="Models\NotificationDecorator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\ProfileRepo.cs" />

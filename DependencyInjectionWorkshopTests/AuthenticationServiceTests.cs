@@ -23,6 +23,7 @@ namespace DependencyInjectionWorkshopTests
         private IOtp _otp;
 
         private IProfile _profile;
+        private IApiUserQuotaV2 _apiUserQuotaV2;
 
         [SetUp]
         public void SetUp()
@@ -33,15 +34,22 @@ namespace DependencyInjectionWorkshopTests
             _notification = Substitute.For<INotification>();
             _logger = Substitute.For<ILogger>();
             _failedCounter = Substitute.For<IFailedCounter>();
-
-
+            _apiUserQuotaV2 = Substitute.For<IApiUserQuotaV2>();
             var authenticationService =
                 new AuthenticationService(_profile, _hash, _otp);
 
-            var notificationDecorator = new NotificationDecorator(authenticationService,_notification);
+            var checkUseTimeDecorator = new ApiCheckTimeDecorator(authenticationService,_apiUserQuotaV2);
+            var notificationDecorator = new NotificationDecorator(checkUseTimeDecorator,_notification);
             var failedCounterDecorator = new FailedCounterDecorator(notificationDecorator,_failedCounter);
             var logDecorator = new LogDecorator(failedCounterDecorator, _failedCounter, _logger);
             _authentication = logDecorator;
+        }
+
+        [Test]
+        public void Before_Verify_Check_Use_Times()
+        {
+            WhenVerify(DefaultAccountId, DefaultHashedPassword, DefaultOtp);
+            _apiUserQuotaV2.Received(1).CheckUseTimes(DefaultAccountId);
         }
 
         [Test]

@@ -1,13 +1,13 @@
 ﻿namespace DependencyInjectionWorkshop.Models
 {
-    public class IsAccountLockDecorator : IAuthenticationService
+    public class IsAccountLockDecorator : IAuthentication
     {
-        private readonly IAuthenticationService _authenticationService;
+        private readonly IAuthentication _authentication;
         private readonly IFailedCounter _failedCounter;
-
-        public IsAccountLockDecorator(IAuthenticationService authenticationService,IFailedCounter failedCounter)
+        
+        public IsAccountLockDecorator(IAuthentication authentication,IFailedCounter failedCounter)
         {
-            _authenticationService = authenticationService;
+            _authentication = authentication;
             _failedCounter = failedCounter;
         }
 
@@ -17,7 +17,7 @@
             if (isLocked) 
                 throw new FailedTooManyTimesException();
 
-            return _authenticationService.Verify(account, password, otp);
+            return _authentication.Verify(account, password, otp);
         }
     }
 }

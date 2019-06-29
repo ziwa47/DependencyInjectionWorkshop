@@ -21,7 +21,7 @@ namespace DependencyInjectionWorkshopTests
         private INotification _notification;
         private IOtpService _otpService;
         private IProfileDao _profile;
-        private IAuthenticationService _sut;
+        private IAuthentication _sut;
 
         [SetUp]
         public void SetUp()
@@ -33,10 +33,9 @@ namespace DependencyInjectionWorkshopTests
             _hash = Substitute.For<IHash>();
             _profile = Substitute.For<IProfileDao>();
 
-            var authenticationService = new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash);
+            var authenticationService = new Authentication(_failedCounter, _logger, _otpService, _profile, _hash);
             var accountLockDecorator = new IsAccountLockDecorator(authenticationService,_failedCounter);
             _sut = new NotificationDecorator(accountLockDecorator, _notification);
-
         }
 
         [Test]

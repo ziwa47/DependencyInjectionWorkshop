@@ -1,11 +1,11 @@
 ﻿namespace DependencyInjectionWorkshop.Models
 {
-    public interface IAuthenticationService
+    public interface IAuthentication
     {
         bool Verify(string account, string password, string otp);
     }
 
-    public class AuthenticationService : IAuthenticationService
+    public class Authentication : IAuthentication
     {
         private readonly IFailedCounter _failedCounter;
         private readonly ILogger _logger;
@@ -13,7 +13,7 @@
         private readonly IProfileDao _profileDao;
         private readonly IHash _hash;
 
-        public AuthenticationService(IFailedCounter failedCounter, ILogger logger, IOtpService otpService, IProfileDao profileDao, IHash hash)
+        public Authentication(IFailedCounter failedCounter, ILogger logger, IOtpService otpService, IProfileDao profileDao, IHash hash)
         {
             _failedCounter = failedCounter;
             _logger = logger;

@@ -79,6 +79,7 @@ namespace DependencyInjectionWorkshop.Models
                 logger.Info($"account:{account} failed times:{failedCount}");
 
                 return false;
+
             }
         }
 

@@ -21,7 +21,7 @@ namespace DependencyInjectionWorkshopTests
         private INotification _notification;
         private IOtpService _otpService;
         private IProfileDao _profile;
-        private AuthenticationService _sut;
+        private IAuthenticationService _sut;
 
         [SetUp]
         public void SetUp()
@@ -33,8 +33,9 @@ namespace DependencyInjectionWorkshopTests
             _hash = Substitute.For<IHash>();
             _profile = Substitute.For<IProfileDao>();
 
-            _sut =
-                new AuthenticationService(_profile, _hash, _otpService, _failedCounter, _notification, _logger);
+            var authenticationService = new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash);
+            _sut = new NotificationDecorator(authenticationService, _notification);
+
         }
 
         [Test]
@@ -92,7 +93,7 @@ namespace DependencyInjectionWorkshopTests
             _failedCounter.IsAccountLocked(DefaultAccount).ReturnsForAnyArgs(true);
         }
 
-        private void ShouldThrow<T>(TestDelegate testDelegate) where T : Exception 
+        private void ShouldThrow<T>(TestDelegate testDelegate) where T : Exception
         {
             Assert.Throws<T>(testDelegate);
         }
@@ -136,7 +137,7 @@ namespace DependencyInjectionWorkshopTests
         private bool WhenIsInValid()
         {
             GivenPasswordFromDb(DefaultAccount, DefaultHashedPassword);
-            GivenHashedPassword(DefaultPassword,DefaultHashedPassword);
+            GivenHashedPassword(DefaultPassword, DefaultHashedPassword);
             GivenOtp(DefaultAccount, DefaultOtp);
 
             var isValid = WhenVerify(DefaultAccount, DefaultPassword, "wrong otp");

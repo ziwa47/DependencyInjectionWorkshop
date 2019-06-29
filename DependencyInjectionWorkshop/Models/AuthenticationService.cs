@@ -24,35 +24,11 @@ namespace DependencyInjectionWorkshop.Models
                 throw new FailedTooManyTimesException();
             }
 
-            string currentPassword;
-            using (var connection = new SqlConnection("my connection string"))
-            {
-                currentPassword = connection.Query<string>("spGetUserPassword", new { Id = account },
-                    commandType: CommandType.StoredProcedure).SingleOrDefault();
-            }
+            var currentPassword = GetCurrentPasswordFromDb(account);
+            var hashPassword = GetHashedPassword(password);
+            var currentOpt = GetOtpResp(account, httpClient);
 
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new StringBuilder();
-            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(password));
-            foreach (var theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-
-            var hashPassword = hash.ToString();
-
-            string otpResp;
-            var response = httpClient.PostAsJsonAsync("api/otps", account).Result;
-            if (response.IsSuccessStatusCode)
-            {
-                otpResp = response.Content.ReadAsAsync<string>().Result;
-            }
-            else
-            {
-                throw new Exception($"web api error, accountId:{account}");
-            }
-
-            if (hashPassword == currentPassword && otp == otpResp)
+            if (hashPassword == currentPassword && otp == currentOpt)
             {
                 //成功
                 var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", account).Result;
@@ -68,7 +44,6 @@ namespace DependencyInjectionWorkshop.Models
                 var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", account).Result;
                 addFailedCountResponse.EnsureSuccessStatusCode();
 
-                
                 var failedCountResponse =
                     httpClient.PostAsJsonAsync("api/failedCounter/GetFailedCount", account).Result;
 
@@ -79,56 +54,54 @@ namespace DependencyInjectionWorkshop.Models
                 logger.Info($"account:{account} failed times:{failedCount}");
 
                 return false;
-
             }
         }
 
-        //public void Notify(string message)
-        //{
-        //    var slackClient = new SlackClient("my api token");
-        //    slackClient.PostMessage(response => { }, "my channel", "my message", "my bot name");
-        //}
+        private static string GetOtpResp(string account, HttpClient httpClient)
+        {
+            string otpResp;
+            var response = httpClient.PostAsJsonAsync("api/otps", account).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                otpResp = response.Content.ReadAsAsync<string>().Result;
+            }
+            else
+            {
+                throw new Exception($"web api error, accountId:{account}");
+            }
 
-        //public string GetPassword(string accountId)
-        //{
-        //    using (var connection = new SqlConnection("my connection string"))
-        //    {
-        //        var password = connection.Query<string>("spGetUserPassword", new { Id = accountId },
-        //            commandType: CommandType.StoredProcedure).SingleOrDefault();
+            return otpResp;
+        }
 
-        //        return password;
-        //    }
-        //}
+        private static string GetHashedPassword(string password)
+        {
+            var crypt = new System.Security.Cryptography.SHA256Managed();
+            var hash = new StringBuilder();
+            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(password));
+            foreach (var theByte in crypto)
+            {
+                hash.Append(theByte.ToString("x2"));
+            }
 
-        //public string GetHash(string plainText)
-        //{
-        //    var crypt = new System.Security.Cryptography.SHA256Managed();
-        //    var hash = new StringBuilder();
-        //    var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(plainText));
-        //    foreach (var theByte in crypto)
-        //    {
-        //        hash.Append(theByte.ToString("x2"));
-        //    }
-        //    return hash.ToString();
-        //}
+            var hashPassword = hash.ToString();
+            return hashPassword;
+        }
 
-        //public string GetOtp(string accountId)
-        //{
-        //    var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
-        //    var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        return response.Content.ReadAsAsync<string>().Result;
-        //    }
-        //    else
-        //    {
-        //        throw new Exception($"web api error, accountId:{accountId}");
-        //    }
+        private static string GetCurrentPasswordFromDb(string account)
+        {
+            string currentPassword;
+            using (var connection = new SqlConnection("my connection string"))
+            {
+                currentPassword = connection.Query<string>("spGetUserPassword", new {Id = account},
+                    commandType: CommandType.StoredProcedure).SingleOrDefault();
+            }
 
-        //}
+            return currentPassword;
+        }
     }
 
     public class FailedTooManyTimesException : Exception
     {
+
     }
 }

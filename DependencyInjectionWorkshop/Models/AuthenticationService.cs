@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Dapper;
+
+using SlackAPI;
+
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using Dapper;
 
 namespace DependencyInjectionWorkshop.Models
 {
@@ -41,8 +44,31 @@ namespace DependencyInjectionWorkshop.Models
                 throw new Exception($"web api error, accountId:{account}");
             }
 
-            return hashPassword == currentPassword && otp == otpResp;
+            if (hashPassword == currentPassword && otp == otpResp)
+            {
+                //成功
+                var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", account).Result;
+
+                resetResponse.EnsureSuccessStatusCode();
+                return true;
+            }
+            else
+            {
+                var slackClient = new SlackClient("my api token");
+                slackClient.PostMessage(msg => { }, "my channel", "my message", "my bot name");
+                //失敗
+                var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", account).Result;
+
+                addFailedCountResponse.EnsureSuccessStatusCode();
+                return false;
+            }
         }
+
+        //public void Notify(string message)
+        //{
+        //    var slackClient = new SlackClient("my api token");
+        //    slackClient.PostMessage(response => { }, "my channel", "my message", "my bot name");
+        //}
 
         //public string GetPassword(string accountId)
         //{

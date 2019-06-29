@@ -34,7 +34,8 @@ namespace DependencyInjectionWorkshopTests
             _profile = Substitute.For<IProfileDao>();
 
             var authenticationService = new AuthenticationService(_failedCounter, _logger, _otpService, _profile, _hash);
-            _sut = new NotificationDecorator(authenticationService, _notification);
+            var accountLockDecorator = new IsAccountLockDecorator(authenticationService,_failedCounter);
+            _sut = new NotificationDecorator(accountLockDecorator, _notification);
 
         }
 

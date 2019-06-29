@@ -78,6 +78,7 @@
     <Compile Include="Models\AuthenticationService.cs" />
     <Compile Include="Models\FailedCounter.cs" />
     <Compile Include="Models\FailedTooManyTimesException.cs" />
+    <Compile Include="Models\IsAccountLockDecorator.cs" />
     <Compile Include="Models\NlogAdapter.cs" />
     <Compile Include="Models\NotificationDecorator.cs" />
     <Compile Include="Models\OtpService.cs" />

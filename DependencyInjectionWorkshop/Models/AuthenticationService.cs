@@ -24,9 +24,6 @@
 
         public bool Verify(string account, string password, string otp)
         {
-            var isLocked = _failedCounter.IsAccountLocked(account);
-            if (isLocked) throw new FailedTooManyTimesException();
-
             var currentPassword = _profileDao.GetPassword(account);
             var hashPassword = _hash.Hash(password);
             var currentOtp = _otpService.GetOtpResp(account);
@@ -36,8 +33,6 @@
                 _failedCounter.ResetFailedCount(account);
                 return true;
             }
-
-           
 
             _failedCounter.AddFailedCount(account);
 

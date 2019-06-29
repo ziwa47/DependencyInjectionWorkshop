@@ -8,7 +8,7 @@
         private readonly IProfileDao _profileDao;
         private readonly IHash _hash;
         private readonly INotification _notification;
-
+        
         public AuthenticationService(IProfileDao profileDao, IHash hash, IOtpService otpService,
             IFailedCounter failedCounter, INotification notification, ILogger logger)
         {

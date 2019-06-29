@@ -11,8 +11,43 @@ using System.Text;
 
 namespace DependencyInjectionWorkshop.Models
 {
+    public class ProfileDao
+    {
+        public string GetPassword(string account)
+        {
+            string currentPassword;
+            using (var connection = new SqlConnection("my connection string"))
+            {
+                currentPassword = connection.Query<string>("spGetUserPassword", new { Id = account },
+                    commandType: CommandType.StoredProcedure).SingleOrDefault();
+            }
+
+            return currentPassword;
+        }
+    }
+
+    public class Sha256Adapter
+    {
+        public string Hash(string plainText)
+        {
+            var crypt = new System.Security.Cryptography.SHA256Managed();
+            var hash = new StringBuilder();
+            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(plainText));
+            foreach (var theByte in crypto)
+            {
+                hash.Append(theByte.ToString("x2"));
+            }
+
+            var hashPassword = hash.ToString();
+            return hashPassword;
+        }
+    }
+
     public class AuthenticationService
     {
+        private readonly ProfileDao _profileDao = new ProfileDao();
+        private readonly Sha256Adapter _sha256Adapter = new Sha256Adapter();
+
         public bool Verify(string account, string password, string otp)
         {
             var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
@@ -22,13 +57,13 @@ namespace DependencyInjectionWorkshop.Models
                 throw new FailedTooManyTimesException();
             }
 
-            var currentPassword = GetCurrentPasswordFromDb(account);
-            var hashPassword = GetHashedPassword(password);
+            var currentPassword = _profileDao.GetPassword(account);
+            var hashPassword = _sha256Adapter.Hash(password);
             var currentOpt = GetOtpResp(account, httpClient);
 
             if (hashPassword == currentPassword && otp == currentOpt)
             {
-                ResetFaildCount(account, httpClient);
+                ResetFailedCount(account, httpClient);
                 return true;
             }
             else
@@ -36,7 +71,6 @@ namespace DependencyInjectionWorkshop.Models
                 PushMessage();
                 AddFailedCount(account, httpClient);
                 LogFailedCount(account, httpClient);
-
                 return false;
             }
         }
@@ -80,7 +114,7 @@ namespace DependencyInjectionWorkshop.Models
             return isLocked;
         }
 
-        private void ResetFaildCount(string account, HttpClient httpClient)
+        private void ResetFailedCount(string account, HttpClient httpClient)
         {
             //成功
             var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", account).Result;
@@ -101,32 +135,6 @@ namespace DependencyInjectionWorkshop.Models
             }
 
             return otpResp;
-        }
-
-        private string GetHashedPassword(string password)
-        {
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new StringBuilder();
-            var crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(password));
-            foreach (var theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-
-            var hashPassword = hash.ToString();
-            return hashPassword;
-        }
-
-        private string GetCurrentPasswordFromDb(string account)
-        {
-            string currentPassword;
-            using (var connection = new SqlConnection("my connection string"))
-            {
-                currentPassword = connection.Query<string>("spGetUserPassword", new { Id = account },
-                    commandType: CommandType.StoredProcedure).SingleOrDefault();
-            }
-
-            return currentPassword;
         }
     }
 

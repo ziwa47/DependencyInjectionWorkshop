@@ -5,12 +5,12 @@ using Dapper;
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public interface IProfileDao
+    public interface IProfile
     {
         string GetPassword(string account);
     }
 
-    public class ProfileDao : IProfileDao
+    public class Profile : IProfile
     {
         public string GetPassword(string account)
         {

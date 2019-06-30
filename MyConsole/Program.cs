@@ -50,6 +50,7 @@ namespace MyConsole
         private static void RegisterContainer()
         {
             var containerBuilder = new ContainerBuilder();
+
             containerBuilder.RegisterType<FakeHash>().As<IHash>();
             containerBuilder.RegisterType<FakeOtp>().As<IOtpService>();
             containerBuilder.RegisterType<FakeProfile>().As<IProfile>();
@@ -58,10 +59,9 @@ namespace MyConsole
             containerBuilder.RegisterType<SlackAdapter>().As<INotification>();
 
             containerBuilder.RegisterType<Authentication>().As<IAuthentication>();
-            //containerBuilder.RegisterDecorator<NotificationDecorator, IAuthentication>();
-            //containerBuilder.RegisterDecorator<FailedAccountLockDecorator, IAuthentication>();
+            containerBuilder.RegisterDecorator<NotificationDecorator, IAuthentication>();
+            containerBuilder.RegisterDecorator<FailedAccountLockDecorator, IAuthentication>();
             containerBuilder.RegisterDecorator<LogFailedDecorator, IAuthentication>();
-
             _container = containerBuilder.Build();
         }
     }

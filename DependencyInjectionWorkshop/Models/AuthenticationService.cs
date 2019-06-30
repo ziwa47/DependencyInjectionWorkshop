@@ -30,11 +30,9 @@
 
             if (hashPassword == currentPassword && otp == currentOtp)
             {
-                _failedCounter.ResetFailedCount(account);
                 return true;
             }
 
-            _failedCounter.AddFailedCount(account);
 
             var failedCount = _failedCounter.GetFailedCount(account);
             _logger.Info($"account:{account} failed times:{failedCount}");

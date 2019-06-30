@@ -1,9 +1,10 @@
-﻿using System;
-using DependencyInjectionWorkshop.Models;
+﻿using DependencyInjectionWorkshop.Models;
 
 using NSubstitute;
-using NSubstitute.Core;
+
 using NUnit.Framework;
+
+using System;
 
 namespace DependencyInjectionWorkshopTests
 {
@@ -34,8 +35,8 @@ namespace DependencyInjectionWorkshopTests
             _profile = Substitute.For<IProfileDao>();
 
             var authenticationService = new Authentication(_failedCounter, _logger, _otpService, _profile, _hash);
-            var accountLockDecorator = new IsAccountLockDecorator(authenticationService,_failedCounter);
-            _sut = new NotificationDecorator(accountLockDecorator, _notification);
+            var notificationDecorator = new NotificationDecorator(authenticationService, _notification);
+            _sut = new FailedAccountLockDecorator(notificationDecorator, _failedCounter);
         }
 
         [Test]

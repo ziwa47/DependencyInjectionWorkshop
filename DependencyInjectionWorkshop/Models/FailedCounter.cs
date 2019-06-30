@@ -33,7 +33,6 @@ namespace DependencyInjectionWorkshop.Models
                 new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", account).Result;
 
             failedCountResponse.EnsureSuccessStatusCode();
-
             var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
             return failedCount;
         }

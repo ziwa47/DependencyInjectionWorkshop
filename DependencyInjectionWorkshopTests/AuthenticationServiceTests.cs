@@ -39,7 +39,7 @@ namespace DependencyInjectionWorkshopTests
                 new AuthenticationService(_profile, _hash, _otp);
 
             var checkUseTimeDecorator = new ApiCheckTimeDecorator(authenticationService,_apiUserQuotaV2);
-            var notificationDecorator = new NotificationDecorator(checkUseTimeDecorator,_notification);
+            var notificationDecorator = new NotificationDecorator(checkUseTimeDecorator,_notification,_logger);
             var failedCounterDecorator = new FailedCounterDecorator(notificationDecorator,_failedCounter);
             var logDecorator = new LogDecorator(failedCounterDecorator, _failedCounter, _logger);
             _authentication = logDecorator;
